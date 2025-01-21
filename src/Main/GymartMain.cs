@@ -7,6 +7,10 @@ using Weather;
 // Ask user for longitude, parese it and check if it is valid
 //var longitude = 2.2;
 
+Console.WriteLine("What is the latitude? (ex 59N11 or 59S11 Note: Between 75N and 65S)");
+var latitude = Console.ReadLine();
+
+
 var lightPolutionCalculator = new LightPolutionCalculator();
 var lightPolution = lightPolutionCalculator.GetLightPolution(latitude, longitude);
 
@@ -74,7 +78,7 @@ else
     Environment.Exit(1);
 }
 
-Console.WriteLine("What is the longitude? (ex 59N11 or 59S11 Note: Between 75N and 65S)");
+
 var latitude = Console.ReadLine();
 if (latitude == null)
 {
