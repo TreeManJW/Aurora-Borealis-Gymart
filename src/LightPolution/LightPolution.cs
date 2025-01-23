@@ -11,6 +11,10 @@ public class LightPolutionCalculator
 {
     public double GetLightPolution(double latitude, double longitude)
     {
+        int latPixel = 1;
+        int longPixel = 1;
+        double? mpsasValue = null;
+
         try
         {
             (longPixel, latPixel) = LongitudeLatitudeInPixels(latitude, longitude);
@@ -44,10 +48,6 @@ public class LightPolutionCalculator
     }
 
 
-
-    int latPixel = 1;
-    int longPixel = 1;
-    double? mpsasValue = null;
 
     static (int, int) LongitudeLatitudeInPixels(double latitude, double longitude)
     {

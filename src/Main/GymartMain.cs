@@ -2,13 +2,89 @@
 using Weather;
 
 
-// Ask user for latitude, parese it and check if it is valid
-//var latitude = 5.5;
-// Ask user for longitude, parese it and check if it is valid
-//var longitude = 2.2;
+// This program starts with asking the user for coordinates in the decimal minute format. It then processes these coordinates in a way so that both the Weather.cs and LightPolution.cs program can run on these values.
+// The program then calls the Nasa API to get the KP index and a custom library to get the chance of seeing the northern lights.
 
+// DegreesAndNM are used to store parsed and split up longitude and latitude.
+string[] degreesAndNM = ["PlaceHolder", "PlaceHolder1"];
+
+// These are used to determine if the location is east of Greenwich and north of the equator. This is used to calculate the correct direction on the image as coordinate don't have their starting point where the image has it's pixel startpoint in the top left.
+bool isEastOfGreenwich = true;
+bool isNorthOfEquator = true;
+
+// These are used to store the amount of pixels from left to right and top to bottom on the image.
+int leftToRightAmoutnOfPixels = 0;
+int topToBottomAmoutnOfPixels = 0;
+
+// Initiate the variables for the latitude and longitude that are going to be in the decimal degrees format. so instead of 59N11 it will be 59.1833. This is used by the Weather.cs library as the API there demands it.
+// Latitude in decimal degrees are also used to create a normalized value of the latitudal direction on the mercator projection.
+double latitudeInDecimalDegrees = 0;
+double longitudeInDecimalDegrees = 0;
+
+
+// Ask user for latitude.
 Console.WriteLine("What is the latitude? (ex 59N11 or 59S11 Note: Between 75N and 65S)");
 var latitude = Console.ReadLine();
+
+if (latitude == null)
+{
+    Console.WriteLine("You must enter a valid value");
+    return;
+}
+
+// Checks the direction from the equator the coordinates go from. Then it splits the string into degrees and nautical miles.
+if (latitude.Contains('N'))
+{
+    degreesAndNM = latitude.Split('N');
+}
+else if (latitude.Contains('S'))
+{
+    degreesAndNM = latitude.Split('S');
+    isNorthOfEquator = false;
+}
+else
+{
+    throw new ArgumentException("You must enter a valid value with the example 59N11 or 59S11 meaning 59°11' north and south respectively.");
+}
+
+// Parse the degrees and nautical miles.
+bool isCorrectDegrees = int.TryParse(degreesAndNM[0], out int degrees);
+bool isCorrectNM = int.TryParse(degreesAndNM[1], out int nauticalMiles);
+
+// If the location is south of the equator the degrees are made negative.
+if (!isNorthOfEquator)
+{
+    degrees = -degrees;
+    nauticalMiles = -nauticalMiles;
+}
+if (isCorrectDegrees && isCorrectNM)
+{
+    // Calculate the latitude in decimal degrees.
+    latitudeInDecimalDegrees = (double)degrees + ((double)nauticalMiles / 60);
+
+    // Calculate the normalized latitude.
+    double normalizedLatitude = (latitudeInDecimalDegrees - 75) / (-140);
+
+    // 16800 is the amount of pixels from top to bottom on the image. That times the normalized value gives us a pixel position on the image.
+    topToBottomAmoutnOfPixels = (int)(16800 * normalizedLatitude);
+}
+else
+{
+    Console.WriteLine("You must enter a valid value with the example 59N11 or 59S11 meaning 59°11' north and south respectively.");
+    return;
+}
+
+
+
+if (leftToRightAmoutnOfPixels == 0)
+{
+    leftToRightAmoutnOfPixels += 1;
+}
+else if (leftToRightAmoutnOfPixels == 43200)
+{
+    leftToRightAmoutnOfPixels -= 1;
+}
+Console.WriteLine(leftToRightAmoutnOfPixels);
 
 
 var lightPolutionCalculator = new LightPolutionCalculator();
@@ -25,9 +101,7 @@ var time = DateTime.Now;
 
 // Print the results
 
-string[] degreesAndNM = ["PlaceHolder", "PlaceHolder1"];
-bool isEastOfGreenwich = true;
-bool isNorthOfEquator = true;
+
 
 Console.WriteLine("What is the longitude? (ex 18E11 or 18W59)");
 var longitude = Console.ReadLine();
@@ -79,78 +153,5 @@ else
 }
 
 
-var latitude = Console.ReadLine();
-if (latitude == null)
-{
-    throw new ArgumentException("You must enter a valid value");
-}
 
-if (latitude.Contains('N'))
-{
-    degreesAndNM = latitude.Split('N');
-}
-else if (latitude.Contains('S'))
-{
-    degreesAndNM = latitude.Split('S');
-    isNorthOfEquator = false;
-}
-else
-{
-    throw new ArgumentException("You must enter a valid value with the example 59N11 or 59S11 meaning 59°11' north and south respectively.");
-}
 
-isCorrectDegrees = int.TryParse(degreesAndNM[0], out degrees);
-isCorrectNM = int.TryParse(degreesAndNM[1], out nauticalMiles);
-if (!isNorthOfEquator)
-{
-    degrees = -degrees;
-    nauticalMiles = -nauticalMiles;
-}
-if (isCorrectDegrees && isCorrectNM)
-{
-    double degreesInDecimals = (double)degrees + ((double)nauticalMiles / 60);
-
-    double normalizedLatitude = (degreesInDecimals - 75) / (-140);
-    topToBottomAmoutnOfPixels = (int)(16800 * normalizedLatitude);
-
-    Console.WriteLine("Amount of pixels from top to bottom on the picture is: " + topToBottomAmoutnOfPixels);
-}
-else
-{
-    throw new ArgumentException("You must enter a valid value with the example 59N11 or 59S11 meaning 59°11' north and south respectively.");
-}
-if (leftToRightAmoutnOfPixels == 0)
-{
-    leftToRightAmoutnOfPixels += 1;
-}
-else if (leftToRightAmoutnOfPixels == 43200)
-{
-    leftToRightAmoutnOfPixels -= 1;
-}
-Console.WriteLine(leftToRightAmoutnOfPixels);
-return (leftToRightAmoutnOfPixels, topToBottomAmoutnOfPixels);
-    }
-    static Rgb24 ColorFinder(int longitudePixels, int latitudePixels)
-{
-    Rgb24 color = new Rgb24(0, 0, 0);
-    Image<Rgb24> image;
-    try
-    {
-        using (image = Image.Load<Rgb24>("world2022.png"))
-        {
-            color = image[longitudePixels, latitudePixels];
-
-            for (int y = 0; y < 20; y++)
-            {
-                for (int x = 0; x < 20; x++)
-                {
-                    image[longitudePixels + (10 - y), latitudePixels + (10 - x)] = new Rgb24(193, 64, 193);
-                }
-            }
-            image.Save("output.png");
-        }
-    }
-    catch (Exception ex)
-    {
-        throw new Exception("Failed to find color on image with exception: " + ex.Message);
-    }
