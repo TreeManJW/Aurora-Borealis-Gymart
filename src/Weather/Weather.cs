@@ -25,7 +25,7 @@ public class WeatherCalculator
             }
             catch (Exception ex)
             {
-                throw new Exception("Error getting weather data ", ex);
+                throw new Exception("Error getting weather data with error: ", ex);
             }
         }
     }
