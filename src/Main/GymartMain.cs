@@ -44,7 +44,8 @@ else if (latitude.Contains('S'))
 }
 else
 {
-    throw new ArgumentException("You must enter a valid value with the example 59N11 or 59S11 meaning 59°11' north and south respectively.");
+    Console.WriteLine("You must enter a valid value with the example 59N11 or 59S11 meaning 59°11' north and south respectively.");
+    return;
 }
 
 // Parse the degrees and nautical miles.
@@ -74,41 +75,14 @@ else
     return;
 }
 
-
-
-if (leftToRightAmoutnOfPixels == 0)
-{
-    leftToRightAmoutnOfPixels += 1;
-}
-else if (leftToRightAmoutnOfPixels == 43200)
-{
-    leftToRightAmoutnOfPixels -= 1;
-}
-Console.WriteLine(leftToRightAmoutnOfPixels);
-
-
-var lightPolutionCalculator = new LightPolutionCalculator();
-var lightPolution = lightPolutionCalculator.GetLightPolution(latitude, longitude);
-
-var weatherCalculator = new WeatherCalculator();
-var weather = weatherCalculator.GetCurrentWeather(latitude, longitude);
-
-// Call Nasa API to get KP index (int)
-
-var time = DateTime.Now;
-
-// Call custom library to get the chance of seeing the northern lights (double)
-
-// Print the results
-
-
-
+// Ask user for longitude.
 Console.WriteLine("What is the longitude? (ex 18E11 or 18W59)");
 var longitude = Console.ReadLine();
 
 if (longitude == null)
 {
-    throw new ArgumentException("You must enter a valid value");
+    Console.WriteLine("You must enter a valid value with the example 18E11 or 18W11 meaning 18°11' east and west respectively.");
+    return;
 }
 
 if (longitude.Contains('E'))
@@ -122,16 +96,19 @@ else if (longitude.Contains('W'))
 }
 else
 {
-    throw new ArgumentException("You must enter a valid value with the example 18E11 or 18W11 meaning 18°11' east and west respectively.");
+    Console.WriteLine("You must enter a valid value with the example 18E11 or 18W11 meaning 18°11' east and west respectively.");
+    return;
 }
 
-bool isCorrectDegrees = int.TryParse(degreesAndNM[0], out int degrees);
-bool isCorrectNM = int.TryParse(degreesAndNM[1], out int nauticalMiles);
+isCorrectDegrees = int.TryParse(degreesAndNM[0], out degrees);
+isCorrectNM = int.TryParse(degreesAndNM[1], out nauticalMiles);
 if (isCorrectDegrees && isCorrectNM)
 {
+    longitudeInDecimalDegrees = (double)degrees + ((double)nauticalMiles / 60);
+
+    // Determines amount of nautical miles from Greenwich.
     degrees *= 60;
     nauticalMiles += degrees;
-    Console.WriteLine("Total nautical miles of that position from Greenwich is " + nauticalMiles);
 
     // Calculate pixel amount. 2 pixels = 1 nautical mile
     int pixlesFromGreenwich = nauticalMiles * 2;
@@ -143,15 +120,31 @@ if (isCorrectDegrees && isCorrectNM)
     {
         leftToRightAmoutnOfPixels = (43200 / 2) - pixlesFromGreenwich;
     }
-    Console.WriteLine("Amout of pixels left to eight on the image = " + leftToRightAmoutnOfPixels);
 }
 else
 {
     Console.WriteLine("Please write the longitude correctly, as exampeled.");
-    Task.Delay(1000);
-    Environment.Exit(1);
+    return;
 }
 
+// Call the LightPolution.cs and Weather.cs libraries to get the light polution and weather.
+try
+{
+    var lightPolutionCalculator = new LightPolutionCalculator();
+    var lightPolution = lightPolutionCalculator.GetLightPolution(topToBottomAmoutnOfPixels, leftToRightAmoutnOfPixels);
 
+    var weatherCalculator = new WeatherCalculator();
+    var weather = weatherCalculator.GetCurrentWeather(latitudeInDecimalDegrees, longitudeInDecimalDegrees);
+}
+catch (Exception e)
+{
+    Console.WriteLine("An error occured while trying to get the light polution or weather. Error: " + e.Message);
+    return;
+}
+// Call Nasa API to get KP index (int)
 
+var time = DateTime.Now;
 
+// Call custom library to get the chance of seeing the northern lights (double)
+
+// Print the results
