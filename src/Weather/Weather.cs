@@ -1,27 +1,24 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.VisualBasic;
 
 namespace Weather;
 
 public class WeatherCalculator
 {
-    public async Task<WeatherInfo> GetCurrentWeather(double latitude, double longitude)
+    public async Task<WeatherInfo> GetCurrentWeatherAndKP(double latitude, double longitude)
     {
         var apiKey = "25a7d8e49c687774b007f667f2f9f211";
         using (var client = new HttpClient())
         {
             try
             {
-                string response = await client.GetStringAsync($"https://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={apiKey}&units=metric");
-                var weather = JsonSerializer.Deserialize<WeatherInfo>(response);
-                if (weather != null)
-                {
-                    return weather;
-                }
-                else
-                {
-                    throw new Exception("API response was null");
-                }
+                var response = await client.GetStringAsync($"https://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={apiKey}&units=metric");
+                var weather = JsonSerializer.Deserialize<WeatherInfo>(response) ?? throw new Exception("API response was null");
+
+                weather.KpValue = await GetKPIndex();
+                return weather;
             }
             catch (Exception ex)
             {
@@ -29,8 +26,29 @@ public class WeatherCalculator
             }
         }
     }
+    private static async Task<double> GetKPIndex()
+    {
+        try
+        {
+            var endDate = DateTime.Now;
+            var startDate = endDate.AddHours(-3);
+            using (var client = new HttpClient())
+            {
+                var response = await client.GetStringAsync($"https://kp.gfz-potsdam.de/app/json/?start={startDate.ToString("yyyy-MM-dd")}T{startDate.ToString("HH:mm:ss")}Z&end={endDate.ToString("yyyy-MM-dd")}T{startDate.ToString("HH:mm:ss")}Z&index=Kp&status=");
+                var jsonResponse = JsonSerializer.Deserialize<JsonElement>(response);
+                var kpValue = jsonResponse.GetProperty("Kp")[0].GetDouble();
+                return kpValue;
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Error getting KP index with error: ", ex);
+        }
+    }
     public class WeatherInfo
     {
+        [JsonPropertyName("KpValue")]
+        public double KpValue { get; set; }
         [JsonPropertyName("weather")]
         public Weather[]? Weather { get; set; }
 
@@ -84,7 +102,6 @@ public class WeatherCalculator
         [JsonPropertyName("icon")]
         public string? Icon { get; set; }
     }
-
     public class WeatherData
     {
         [JsonPropertyName("temp")]
@@ -111,7 +128,6 @@ public class WeatherCalculator
         [JsonPropertyName("grnd_level")]
         public int GroundLevel { get; set; }
     }
-
     public class Wind
     {
         [JsonPropertyName("speed")]
@@ -123,19 +139,16 @@ public class WeatherCalculator
         [JsonPropertyName("gust")]
         public double Gust { get; set; }
     }
-
     public class Snow
     {
         [JsonPropertyName("1h")]
         public double OneHour { get; set; }
     }
-
     public class Clouds
     {
         [JsonPropertyName("all")]
         public int All { get; set; }
     }
-
     public class Sys
     {
         [JsonPropertyName("type")]

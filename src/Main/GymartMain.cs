@@ -131,20 +131,16 @@ else
 try
 {
     var lightPolutionCalculator = new LightPolutionCalculator();
-    var lightPolution = lightPolutionCalculator.GetLightPolution(topToBottomAmoutnOfPixels, leftToRightAmoutnOfPixels);
+    var mpsasValue = lightPolutionCalculator.GetLightPolution(topToBottomAmoutnOfPixels, leftToRightAmoutnOfPixels);
 
     var weatherCalculator = new WeatherCalculator();
-    var weather = weatherCalculator.GetCurrentWeather(latitudeInDecimalDegrees, longitudeInDecimalDegrees);
+    var weather = weatherCalculator.GetCurrentWeatherAndKP(latitudeInDecimalDegrees, longitudeInDecimalDegrees);
+
+    Console.WriteLine("The light polution is: " + mpsasValue);
+    Console.WriteLine("The weather is: " + weather);
 }
 catch (Exception e)
 {
     Console.WriteLine("An error occured while trying to get the light polution or weather. Error: " + e.Message);
     return;
 }
-// Call Nasa API to get KP index (int)
-
-var time = DateTime.Now;
-
-// Call custom library to get the chance of seeing the northern lights (double)
-
-// Print the results
