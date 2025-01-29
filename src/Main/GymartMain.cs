@@ -1,4 +1,5 @@
-﻿using LightPolution;
+﻿using System.Diagnostics.CodeAnalysis;
+using LightPolution;
 using Weather;
 
 
@@ -128,19 +129,69 @@ else
 }
 
 // Call the LightPolution.cs and Weather.cs libraries to get the light polution and weather.
+
+double kpValue;
+string? clouds;
+var time = DateTime.Now.Hour;
+double mpsasValue;
+
 try
 {
     var lightPolutionCalculator = new LightPolutionCalculator();
-    var mpsasValue = lightPolutionCalculator.GetLightPolution(topToBottomAmoutnOfPixels, leftToRightAmoutnOfPixels);
+    mpsasValue = lightPolutionCalculator.GetLightPolution(topToBottomAmoutnOfPixels, leftToRightAmoutnOfPixels);
 
     var weatherCalculator = new WeatherCalculator();
-    var weather = weatherCalculator.GetCurrentWeatherAndKP(latitudeInDecimalDegrees, longitudeInDecimalDegrees);
+    var weather = await weatherCalculator.GetCurrentWeatherAndKP(latitudeInDecimalDegrees, longitudeInDecimalDegrees);
 
-    Console.WriteLine("The light polution is: " + mpsasValue);
-    Console.WriteLine("The weather is: " + weather);
+    if (weather != null)
+    {
+        kpValue = weather.KpValue;
+        if (weather.Clouds != null)
+        {
+            clouds = weather.Clouds.ToString();
+        }
+        else
+        {
+            throw new Exception("The cloud data was null.");
+        }
+    }
+    else
+    {
+        throw new Exception("The weather data was null.");
+    }
 }
 catch (Exception e)
 {
     Console.WriteLine("An error occured while trying to get the light polution or weather. Error: " + e.Message);
     return;
 }
+
+int chanceOfSeeingNorthernLights = -1;
+string likelyhoodOfSeeingNorthernLights;
+
+switch (kpValue)
+{
+    case 0 when latitudeInDecimalDegrees < 48 || mpsasValue < 19.50 || time > 8 && time < 16:
+        chanceOfSeeingNorthernLights = 0;
+        likelyhoodOfSeeingNorthernLights = $"There is a very slim chance there will be any northern lights at your location. Especially with a kp value under the max of 9 and a lightpolution of {mpsasValue}. Right now the kp value is {kpValue}.";
+        break;
+    case 1 when kpValue <= 4  || clouds == "overcast clouds":
+        chanceOfSeeingNorthernLights = 0;
+        likelyhoodOfSeeingNorthernLights = $"There is a very low or none existant chance of seeing the northern lights right now. The kp value is {kpValue} and the cloud coverage is {clouds}.";
+        break;
+    case 2 when kpValue > 4 && kpValue <= 6 && latitudeInDecimalDegrees > 55:
+        chanceOfSeeingNorthernLights = 1;
+        
+        break;
+    case 3 when kpValue > 6 && kpValue <= 7.5 && latitudeInDecimalDegrees > 52:
+        chanceOfSeeingNorthernLights = 2;
+        break;
+    case 4 when kpValue < 8 && latitudeInDecimalDegrees > 50:
+        chanceOfSeeingNorthernLights = 3;
+        break;
+    case 5 when kpValue >= 8 && latitudeInDecimalDegrees > 48:
+        chanceOfSeeingNorthernLights = 4;
+        break;
+}
+
+Console.WriteLine(chanceOfSeeingNorthernLights);

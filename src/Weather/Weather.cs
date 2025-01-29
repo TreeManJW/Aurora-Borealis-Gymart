@@ -47,7 +47,7 @@ public class WeatherCalculator
     }
     public class WeatherInfo
     {
-        [JsonPropertyName("KpValue")]
+        [JsonPropertyName("kp_value")]
         public double KpValue { get; set; }
         [JsonPropertyName("weather")]
         public Weather[]? Weather { get; set; }
