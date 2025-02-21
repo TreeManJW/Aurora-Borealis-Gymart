@@ -31,10 +31,11 @@ public class WeatherCalculator
         try
         {
             var endDate = DateTime.Now;
-            var startDate = endDate.AddHours(-3);
+            var startDate = endDate.AddHours(-4);
             using (var client = new HttpClient())
             {
-                var response = await client.GetStringAsync($"https://kp.gfz-potsdam.de/app/json/?start={startDate.ToString("yyyy-MM-dd")}T{startDate.ToString("HH:mm:ss")}Z&end={endDate.ToString("yyyy-MM-dd")}T{startDate.ToString("HH:mm:ss")}Z&index=Kp&status=");
+                Console.WriteLine($"https://kp.gfz-potsdam.de/app/json/?start={startDate.ToString("yyyy-MM-dd")}T{startDate.ToString("HH:mm:ss")}Z&end={endDate.ToString("yyyy-MM-dd")}T{endDate.ToString("HH:mm:ss")}Z&index=Kp&status=");
+                var response = await client.GetStringAsync($"https://kp.gfz-potsdam.de/app/json/?start={startDate.ToString("yyyy-MM-dd")}T{startDate.ToString("HH:mm:ss")}Z&end={endDate.ToString("yyyy-MM-dd")}T{endDate.ToString("HH:mm:ss")}Z&index=Kp&status=");
                 var jsonResponse = JsonSerializer.Deserialize<JsonElement>(response);
                 var kpValue = jsonResponse.GetProperty("Kp")[0].GetDouble();
                 return kpValue;
